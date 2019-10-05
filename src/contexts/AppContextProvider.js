@@ -2,11 +2,11 @@ import React, { createContext, useState } from 'react';
 
 export const AppContext = createContext();
 
-const AppContextProvider = ({children}) => {
+const AppContextProvider = ({ children }) => {
 
     const [loading, setLoading] = useState(false);
 
-    return ( 
+    return (
         <AppContext.Provider
             value={{
                 loading
@@ -14,7 +14,7 @@ const AppContextProvider = ({children}) => {
         >
             {children}
         </AppContext.Provider>
-     );
+    );
 }
- 
+
 export default AppContextProvider;

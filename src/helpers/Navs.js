@@ -1,6 +1,10 @@
 import React from 'react';
 import { Icon } from "antd";
-import { DASHBOARD_PATH, LOGIN_PATH, PAGE_403_PATH, PAGE_500_PATH, PAGE_404_PATH, USER_PATH } from '../routes/Slugs';
+import {
+    DASHBOARD_PATH, LOGIN_PATH, PAGE_403_PATH,
+    PAGE_500_PATH, PAGE_404_PATH, USER_PATH,
+    PRODUCT_PATH
+} from '../routes/Slugs';
 
 const Navs = [
     {
@@ -8,6 +12,13 @@ const Navs = [
         title: 'Dashboard',
         path: DASHBOARD_PATH,
         icon: <Icon type="pie-chart" />,
+        subMenu: null
+    },
+    {
+        key: 'products',
+        title: 'Products',
+        path: PRODUCT_PATH,
+        icon: <Icon type="shopping-cart" />,
         subMenu: null
     },
     {

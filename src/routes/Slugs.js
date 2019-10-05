@@ -9,3 +9,4 @@ export const USER_PATH = `${ROOT_PATH}user`
 export const PAGE_403_PATH = `${ROOT_PATH}403`;
 export const PAGE_404_PATH = `${ROOT_PATH}404`;
 export const PAGE_500_PATH = `${ROOT_PATH}500`;
+export const PRODUCT_PATH = `${ROOT_PATH}product`;
