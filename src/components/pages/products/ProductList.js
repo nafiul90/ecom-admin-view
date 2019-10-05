@@ -15,7 +15,8 @@ const Products = () => {
 
     return (
         <Fragment>
-            {productContext.errorMsg && <h2 style={{ color: "brown" }}>{productContext.errorMsg} !</h2>}
+            {productContext.errorMsg && <h2 style={{ color: "brown" }}>{productContext.errorMsg}</h2>}
+
             <Table
                 className="product_table"
                 columns={columns}
