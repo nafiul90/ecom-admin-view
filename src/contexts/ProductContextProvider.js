@@ -11,10 +11,9 @@ const ProductContextProvider = ({ children }) => {
     const [errorMsg, setErrorMsg] = useState('');
 
     const getAllProducts = () => {
-        console.log("here");
         axios.get(getAllProductsApi)
             .then(res => setProducts(res.data))
-            .catch(err => setErrorMsg(err.response.data));
+            .catch(err => setErrorMsg(err.response ? err.response.data : err.message));
     }
 
 

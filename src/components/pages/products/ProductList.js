@@ -11,16 +11,19 @@ const Products = () => {
 
     useEffect(() => {
         productContext.getAllProducts();
-    }, [null])
+    }, [])
 
     return (
-        <Table
-            className="product_table"
-            columns={columns}
-            rowSelection={rowSelection}
-            dataSource={productContext.products.map((e, i) => ({ ...e, key: i }))}
-            expandedRowRender={record => <ExpandView data={record} />}
-        />
+        <Fragment>
+            {productContext.errorMsg && <h2 style={{ color: "brown" }}>{productContext.errorMsg} !</h2>}
+            <Table
+                className="product_table"
+                columns={columns}
+                rowSelection={rowSelection}
+                dataSource={productContext.products.map((e, i) => ({ ...e, key: i }))}
+                expandedRowRender={record => <ExpandView data={record} />}
+            />
+        </Fragment>
     )
 }
 
