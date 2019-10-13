@@ -6,17 +6,16 @@ import { ADD_PRODUCT_PATH } from "../../../routes/Slugs";
 import { Link } from 'react-router-dom';
 
 
-import "./Products.scss";
-
 const Products = () => {
 
-    const pageHeader = <PageHeader title="Products" subTitle="Your product list." />
+    const pageHeader = <PageHeader title="Products" subTitle="Your product list." extra={[
+        <Link to={ADD_PRODUCT_PATH}>
+            <Button type="primary" icon="plus">ADD MORE PRODUCT</Button>
+        </Link>
+    ]}
+    />
     return (
         <PageWrapper pageHeader={pageHeader}>
-            <Link to={ADD_PRODUCT_PATH}>
-                <Button shape="circle" type="primary" icon="plus"></Button> ADD MORE PRODUCT<br /><br />
-            </Link>
-
             <ProductList />
         </PageWrapper>
     )

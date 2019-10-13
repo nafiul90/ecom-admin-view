@@ -11,3 +11,5 @@ export const PAGE_404_PATH = `${ROOT_PATH}404`;
 export const PAGE_500_PATH = `${ROOT_PATH}500`;
 export const PRODUCT_PATH = `${ROOT_PATH}product`;
 export const ADD_PRODUCT_PATH = `${ROOT_PATH}add-product`;
+export const PRODUCT_INFO_PATH = `${ROOT_PATH}product-info`;
+export const EDIT_PATH = `${ROOT_PATH}edit`;

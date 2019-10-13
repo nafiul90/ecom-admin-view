@@ -1,19 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "antd";
 import _ from "lodash";
 import Input from "../input/Input";
+import { checkValidity, formIsValid } from "./validate";
 import "./Form.scss"
 
 
 export default (props) => {
 
-    const [formData, setFormData] = useState(createForm(props.formData, props.data));
-    const [isValid, setIsValid] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [errorMassage, setErrorMassage] = useState(null);
+    const [formData, setFormData] = useState(props.formData);
 
     const inputChangeHandler = (value, elementName) => {
-        let newFormData = JSON.parse(JSON.stringify(formData));
+        let newFormData = { ...formData }
         newFormData[elementName].config.value = value;
 
         let validity = checkValidity(value, newFormData[elementName].validation);
@@ -21,145 +19,137 @@ export default (props) => {
         newFormData[elementName].errorMsg = validity.errorMsg;
         newFormData[elementName].touched = true;
         setFormData(newFormData);
-        setIsValid(formIsValid(newFormData));
     }
 
 
-    return (
-        !loading ?
-            <div className="form">
-                {
-                    createFormData(formData).map((e, i) => (
-                        <Input
-                            key={i}
-                            elementType={e.elementType}
-                            config={e.config}
-                            label={e.label}
-                            valid={e.valid}
-                            errorMsg={e.errorMsg}
-                            required={e.required}
-                            elementName={e.elementName}
-                            changed={inputChangeHandler}
+    const onSubmitHandle = (e, newFormData = false, root) => {
+        e && e.preventDefault();
 
-                        />
-                    ))
-                }{
-                    errorMassage && <h4 >{errorMassage}</h4>
+        let form = newFormData ? newFormData : { ...formData };
+        let validation = formIsValid(form);
+        if (!validation.status) {
+            window.alert("Please validate the form properly.\n" + validation.errorMsg);
+            return;
+        }
+        let data = {};
+        for (let e in form) {
+            if (!form[e].nonElement) {
+                if (form[e].elementType === "nestedObject") {
+                    data[e] = onSubmitHandle(null, form[e].config.value, false);
+                    continue;
                 }
-                <Button disabled={!isValid}
-                    variant="contained" color="primary"
-                    onClick={() => console.log("Clicked!")}
-                >
+                data[e] = form[e].config.value;
+            }
+        }
+
+        props.onSubmit(data, root);
+        return data;
+    }
+
+    const onSubmitNestedObject = (elementName) => {
+        let newFormData = { ...formData };
+        let data = {};
+        let nestedForm = { ...newFormData[elementName].config.nested };
+        for (let e in nestedForm)
+            if (!nestedForm[e].nonElement)
+                data[e] = nestedForm[e].config.value;
+
+        newFormData[elementName].config.value.push(data);
+        let validation = checkValidity(data);
+        newFormData[elementName].valid = validation.valid;
+        newFormData[elementName].errorMsg = validation.errorMsg;
+        newFormData[elementName].touched = true;
+
+        setFormData(newFormData);
+    }
+
+    const onDeleteNestedObject = (index, elementName) => {
+        let newFormData = { ...formData };
+        let nestedArray = newFormData[elementName].config.value.filter((e, i) => i !== index);
+        newFormData[elementName].config.value = nestedArray;
+        let validation = checkValidity(nestedArray, newFormData[elementName].validation);
+        newFormData[elementName].valid = validation.valid;
+        newFormData[elementName].errorMsg = validation.errorMsg;
+        newFormData[elementName].touched = true;
+
+        setFormData(newFormData);
+    }
+
+    const resetForm = () => {
+        setFormData(props.formData);
+        localStorage.setItem("product", JSON.stringify(props.formData));
+    }
+
+    return (
+        <div className="form">
+            {
+                createForm(formData).map((e, i) => (
+                    <Input
+                        key={i}
+                        elementType={e.elementType}
+                        config={e.config}
+                        label={e.label}
+                        valid={e.valid}
+                        errorMsg={e.errorMsg}
+                        required={e.required}
+                        elementName={e.elementName}
+                        styles={e.styles}
+                        changed={inputChangeHandler}
+                        onSubmitNestedObject={onSubmitNestedObject}
+                        onDeleteNestedObject={onDeleteNestedObject}
+                    />
+                ))
+            }{
+                props.errorMassage && <h4 >{props.errorMassage}</h4>
+            }
+            {props.children}
+            {
+                props.submitMsg &&
+                <Button type={props.submitButtonType} onClick={(e) => onSubmitHandle(e, false, props.root)}>
                     {props.submitMsg}
                 </Button>
-            </div> : <Progress />
+            }&nbsp;&nbsp;&nbsp;
+            {
+                props.resetMsg &&
+                <Button type="danger" onClick={resetForm}>
+                    {props.resetMsg}
+                </Button>
+            }
+        </div>
 
     )
 }
 
-const createForm = (formData, data) => {
-    if (data)
-        for (let e in formData) {
-            formData[e].config.value = data[e] ? data[e] : formData[e].config.value;
-        }
-    return formData;
-}
-
-
-const createFormData = data => {
+const createForm = data => {
     let elementArray = [];
     for (let element in data) {
         let formElement = {
             label: data[element].label,
             elementType: data[element].elementType,
             config: data[element].config,
-            valid: data[element].touched ? data[element].valid : true,
+            valid: data[element].touched ? data[element].valid : "success",
             errorMsg: data[element].errorMsg,
-            required: data[element].validation.required.value,
-            elementName: element
+            required: data[element].validation && data[element].validation.required && data[element].validation.required.value,
+            elementName: element,
+            styles: data[element].styles
         };
         elementArray.push(formElement);
     }
     return elementArray;
 };
 
-
-const checkValidity = (value, rules) => {
-
-    if (!rules) {
-        return { valid: "success", errorMsg: "" };;
-    }
-
-    let isValid = true;
-    let errorMsg = "";
-
-    if (rules.required.value && rules.type.value === "string") {
-        isValid = value.trim() !== "" && isValid;
-        errorMsg += isValid ? "" : rules.required.msg;
-        if (!isValid) return { valid: "error", errorMsg: errorMsg };
-    }
-
-    if (rules.type.value === "file" && rules.required.value) {
-        isValid = value !== null;
-        errorMsg += isValid ? "" : rules.required.msg;
-        if (!isValid) return { valid: "error", errorMsg: errorMsg };
-    }
-
-    if (rules.minlength) {
-        isValid = value.length >= rules.minlength.value && isValid;
-        errorMsg +=
-            value.length < rules.minlength.value ? rules.minlength.msg + "" : "";
-        if (!isValid) return { valid: "error", errorMsg: errorMsg };
-    }
-
-    if (rules.maxlength) {
-        isValid = value.length <= rules.maxlength.value && isValid;
-        errorMsg +=
-            value.length > rules.maxlength.value ? rules.maxlength.msg + "" : "";
-        if (!isValid) return { valid: "error", errorMsg: errorMsg };
-    }
-
-    if (rules.type.value === "number") {
-        // const pattern = /^\d+$/;
-        // isValid = pattern.test(value) && isValid;
-        isValid = value !== NaN;
-        errorMsg += isValid ? "" : rules.type.msg;
-        if (isValid) {
-            isValid = value >= rules.min.value && value <= rules.max.value;
-            errorMsg += value >= rules.min.value ? "" : rules.min.msg;
-            errorMsg += value <= rules.max.value ? "" : rules.max.msg;
-        }
-        if (!isValid) return { valid: "error", errorMsg: errorMsg };
-    }
-
-    if (rules.type.value === "array" && rules.required.value) {
-        isValid = value.length > 0 && isValid;
-        if (!isValid) return { valid: "error", errorMsg: errorMsg };
-    }
-
-    return { valid: "success", errorMsg: errorMsg };
-};
-
-const formIsValid = form => {
-    let isValid = true;
-
-    for (let e in form) {
-        if (form[e].elementType !== "separetor") {
-            if (!form[e].valid || form[e].valid === "error") {
-                isValid = false;
-                break;
+export const createFormWithData = (formData, data) => {
+    if (data)
+        for (let e in formData) {
+            if (formData[e].elementType === "nestedObject")
+                createFormWithData(formData[e].config.value, data[e]);
+            else if (!formData[e].nonElement) {
+                formData[e].config.value = data[e] ? data[e] : formData[e].config.value;
+                let validation = checkValidity(formData[e].config.value, formData[e].validation);
+                formData[e].valid = validation.valid;
+                formData[e].errorMsg = validation.errorMsg;
             }
+
         }
-    }
-    console.log("form is valid========>", isValid);
-
-    return isValid;
-};
-
-
-const Progress = () => {
-    return (
-        <h2>loading ...</h2>
-    );
-
+    return formData;
 }
